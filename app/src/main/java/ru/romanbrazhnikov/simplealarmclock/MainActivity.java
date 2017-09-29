@@ -5,8 +5,10 @@ import android.app.FragmentManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -71,16 +73,17 @@ public class MainActivity
         tvTime.setOnClickListener(mTimeClickListener);
 
 
-        Intent intent = new Intent(MainActivity.this, AlarmActivity.class);
+        Intent intent = new Intent(MainActivity.this, AlarmReceiver.class);
         alarmIntent = PendingIntent.getBroadcast(MainActivity.this, 0, intent, 0);
     }
 
     @Override
     public void onDateSet(int year, int month, int day) {
-        tvDate.setText(day + "." + month + "." + year);
         calendar.set(Calendar.YEAR, year);
         calendar.set(Calendar.MONTH, month);
         calendar.set(Calendar.DAY_OF_MONTH, day);
+
+        tvDate.setText(mDateFormat.format(calendar.getTime()));
     }
 
     @Override
@@ -98,11 +101,20 @@ public class MainActivity
         @Override
         public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
             if (b) {
-                alarmMgr.setRepeating(
-                        AlarmManager.RTC_WAKEUP,
-                        calendar.getTimeInMillis(),
-                        60000,
-                        alarmIntent);
+                Log.d("RUN: ", mDateFormat.format(calendar.getTime()));
+                Log.d("RUN: ", mTimeFormat.format(calendar.getTime()));
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                    alarmMgr.setExact(
+                            AlarmManager.RTC_WAKEUP,
+                            calendar.getTimeInMillis(),
+                            alarmIntent);
+                }else {
+                    alarmMgr.setRepeating(
+                            AlarmManager.RTC_WAKEUP,
+                            calendar.getTimeInMillis(),
+                            60000,
+                            alarmIntent);
+                }
             } else {
                 if (alarmMgr != null) {
                     alarmMgr.cancel(alarmIntent);
