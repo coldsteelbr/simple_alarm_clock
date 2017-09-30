@@ -31,8 +31,8 @@ public class MainActivity
         implements TimePickerDialog.OnTimeSetListener {
     private static final String TIME_PICKER_DIALOG = "TIME_PICKER_DIALOG";
 
-    private static final String SH_TIME = "SH_TIME";
-    private static final String SH_STATE = "SH_STATE";
+    private static final String SP_TIME = "SP_TIME";
+    private static final String SP_STATE = "SP_STATE";
 
     private DateFormat mDateFormat = new SimpleDateFormat("dd.MM.yyyy");
     private DateFormat mTimeFormat = new SimpleDateFormat("HH:mm");
@@ -67,24 +67,24 @@ public class MainActivity
         calendar.setTimeInMillis(System.currentTimeMillis());
         alarmMgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 
-        initWidgets();
 
         mAlarm = new Alarm();
 
-        if (mSP.contains(SH_TIME)) {
-            mAlarm.mTime = mSP.getString(SH_TIME, "00:00");
+
+        mAlarm.mTime = mSP.getString(SP_TIME, "00:00");
+
+
+        switch (mSP.getString("SP_STATE", "off")) {
+            case "on":
+                mAlarm.mState = Alarm.OnOff.ON;
+                break;
+            case "off":
+                mAlarm.mState = Alarm.OnOff.OFF;
+                break;
         }
 
-        if (mSP.contains(SH_STATE)) {
-            switch (mSP.getString("SH_STATE", "off")) {
-                case "on":
-                    mAlarm.mState = Alarm.OnOff.ON;
-                    break;
-                case "off":
-                    mAlarm.mState = Alarm.OnOff.OFF;
-                    break;
-            }
-        }
+
+        initWidgets();
 
         Intent intent = new Intent(MainActivity.this, AlarmReceiver.class);
         alarmIntent = PendingIntent.getBroadcast(MainActivity.this, 0, intent, 0);
@@ -93,10 +93,18 @@ public class MainActivity
     private void initWidgets() {
         // checkbox
         cbOnOff = findViewById(R.id.cb_onOff);
+        switch (mAlarm.mState) {
+            case ON:
+                cbOnOff.setChecked(true);
+                break;
+            case OFF:
+                cbOnOff.setChecked(false);
+                break;
+        }
         cbOnOff.setOnCheckedChangeListener(mOnOffListener);
 
         tvTime = findViewById(R.id.tv_time);
-        tvTime.setText(mTimeFormat.format(calendar.getTime()));
+        tvTime.setText(mAlarm.mTime);
         tvTime.setOnClickListener(mTimeClickListener);
     }
 
@@ -115,35 +123,80 @@ public class MainActivity
 
         @Override
         public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+
             if (b) {
                 Log.d("RUN: ", mDateFormat.format(calendar.getTime()));
                 Log.d("RUN: ", mTimeFormat.format(calendar.getTime()));
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                    alarmMgr.setExact(
-                            AlarmManager.RTC_WAKEUP,
-                            calendar.getTimeInMillis(),
-                            alarmIntent);
-                } else {
-                    alarmMgr.setRepeating(
-                            AlarmManager.RTC_WAKEUP,
-                            calendar.getTimeInMillis(),
-                            60000,
-                            alarmIntent);
-                }
+                resetAlarm();
+
+                saveAlarmState(Alarm.OnOff.ON);
+
             } else {
-                if (alarmMgr != null) {
-                    alarmMgr.cancel(alarmIntent);
-                }
+                cancelAlarm();
+
+                saveAlarmState(Alarm.OnOff.OFF);
             }
 
         }
     }
 
+    /**
+     * Saves alarm state to shared preferences
+     */
+    private void saveAlarmState(Alarm.OnOff state) {
+        SharedPreferences.Editor editor = mSP.edit();
+        editor.putString(SP_TIME, tvTime.getText().toString());
+        switch (state) {
+            case ON:
+                editor.putString(SP_STATE, "on");
+                break;
+            case OFF:
+                editor.putString(SP_STATE, "off");
+                break;
+        }
+    }
+
+    /**
+     * Cancels an old alarm and sets again a new one
+     */
+    private void resetAlarm() {
+        // first trying to cancel
+        cancelAlarm();
+        //TODO: NEXT: calendar.setTime(new Date());
+
+        // check if TIME less or more than the current time
+        // add 1 day to the calendar then
+
+        // then resetting
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            alarmMgr.setExact(
+                    AlarmManager.RTC_WAKEUP,
+                    calendar.getTimeInMillis(),
+                    alarmIntent);
+        } else {
+            alarmMgr.set(
+                    AlarmManager.RTC_WAKEUP,
+                    calendar.getTimeInMillis(),
+                    alarmIntent);
+        }
+    }
+
+    /**
+     * Cancels current alarm
+     */
+    private void cancelAlarm() {
+        if (alarmMgr != null) {
+            alarmMgr.cancel(alarmIntent);
+        }
+    }
+
+    /**
+     * Shows TimerPickerDialog
+     */
     class OnTimeClickListener implements View.OnClickListener {
         @Override
         public void onClick(View view) {
             FragmentManager fm = getFragmentManager();
-
             TimePickerFragment dialog = TimePickerFragment.getInstance(calendar);
             dialog.show(fm, TIME_PICKER_DIALOG);
         }
