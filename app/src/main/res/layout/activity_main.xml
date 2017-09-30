@@ -6,15 +6,7 @@
     android:layout_height="match_parent"
     android:gravity="center"
     android:orientation="vertical"
-    tools:context="ru.romanbrazhnikov.simplealarmclock.MainActivity">
-
-    <TextView
-        android:id="@+id/tv_date"
-        android:layout_height="wrap_content"
-        android:layout_width="match_parent"
-        android:gravity="center"
-        android:textSize="40sp"
-        tools:text="01.01.2017"/>
+    tools:context="ru.romanbrazhnikov.simplealarmclock.view.MainActivity">
 
     <TextView
         android:id="@+id/tv_time"

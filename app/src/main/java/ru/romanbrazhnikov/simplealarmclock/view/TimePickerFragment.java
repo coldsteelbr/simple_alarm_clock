@@ -1,8 +1,9 @@
-package ru.romanbrazhnikov.simplealarmclock;
+package ru.romanbrazhnikov.simplealarmclock.view;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
+import android.app.TimePickerDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -10,6 +11,8 @@ import android.view.View;
 import android.widget.TimePicker;
 
 import java.util.Calendar;
+
+import ru.romanbrazhnikov.simplealarmclock.R;
 
 /**
  * Created by roman on 29.09.17.
@@ -49,8 +52,9 @@ public class TimePickerFragment extends DialogFragment {
                         int hour = mTimePicker.getCurrentHour();
                         int minute = mTimePicker.getCurrentMinute();
 
-                        SelectedTimeInterface timeReceiver = (SelectedTimeInterface) getActivity();
-                        timeReceiver.onTimeSet(hour, minute);
+                        TimePickerDialog.OnTimeSetListener timeReceiver
+                                = (TimePickerDialog.OnTimeSetListener) getActivity();
+                        timeReceiver.onTimeSet(mTimePicker, hour, minute);
                     }
                 })
                 .setNegativeButton(android.R.string.cancel, null)

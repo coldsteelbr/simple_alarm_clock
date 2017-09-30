@@ -1,19 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:gravity="center"
-    tools:context="ru.romanbrazhnikov.simplealarmclock.AlarmActivity">
+    tools:context="ru.romanbrazhnikov.simplealarmclock.view.AlarmActivity">
+
     <TextView
         android:text="That's the time!"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:gravity="center"
         android:textSize="40sp"/>
+
     <TextView
         android:id="@+id/tv_dateTime"
         android:layout_height="wrap_content"
@@ -21,4 +22,10 @@
         android:gravity="center"
         android:foregroundGravity="center"
         tools:text="01.01.2017\n12:34"/>
+
+    <Button
+        android:id="@+id/b_stop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Stop"/>
 </LinearLayout>

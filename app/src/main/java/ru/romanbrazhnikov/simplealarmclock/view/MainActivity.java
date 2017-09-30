@@ -1,10 +1,12 @@
-package ru.romanbrazhnikov.simplealarmclock;
+package ru.romanbrazhnikov.simplealarmclock.view;
 
 import android.app.AlarmManager;
 import android.app.FragmentManager;
 import android.app.PendingIntent;
+import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -13,20 +15,24 @@ import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.TextView;
+import android.widget.TimePicker;
 
 import java.text.DateFormat;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Date;
+
+import ru.romanbrazhnikov.simplealarmclock.AlarmReceiver;
+import ru.romanbrazhnikov.simplealarmclock.R;
+import ru.romanbrazhnikov.simplealarmclock.model.Alarm;
 
 
 public class MainActivity
         extends AppCompatActivity
-        implements SelectedDateInterface,
-        SelectedTimeInterface {
-    private static final String DATE_PICKER_DIALOG = "DATE_PICKER_DIALOG";
+        implements TimePickerDialog.OnTimeSetListener {
     private static final String TIME_PICKER_DIALOG = "TIME_PICKER_DIALOG";
+
+    private static final String SH_TIME = "SH_TIME";
+    private static final String SH_STATE = "SH_STATE";
 
     private DateFormat mDateFormat = new SimpleDateFormat("dd.MM.yyyy");
     private DateFormat mTimeFormat = new SimpleDateFormat("HH:mm");
@@ -34,12 +40,13 @@ public class MainActivity
     private AlarmManager alarmMgr;
     private PendingIntent alarmIntent;
     private Calendar calendar = Calendar.getInstance();
+    private Alarm mAlarm;
+    private SharedPreferences mSP;
 
     //
     // Listeners
     //
     private OnAlarmCheckedListener mOnOffListener = new OnAlarmCheckedListener();
-    private OnDateClickListener mDateClickListener = new OnDateClickListener();
     private OnTimeClickListener mTimeClickListener = new OnTimeClickListener();
 
     //
@@ -54,41 +61,49 @@ public class MainActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        mSP = getPreferences(MODE_PRIVATE);
 
+        // TODO: set from the state
         calendar.setTimeInMillis(System.currentTimeMillis());
         alarmMgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 
+        initWidgets();
 
-        // checkbox
-        cbOnOff = findViewById(R.id.cb_onOff);
-        cbOnOff.setOnCheckedChangeListener(mOnOffListener);
+        mAlarm = new Alarm();
 
-        // text fields
-        tvDate = findViewById(R.id.tv_date);
-        tvDate.setText(mDateFormat.format(calendar.getTime()));
-        tvDate.setOnClickListener(mDateClickListener);
+        if (mSP.contains(SH_TIME)) {
+            mAlarm.mTime = mSP.getString(SH_TIME, "00:00");
+        }
 
-        tvTime = findViewById(R.id.tv_time);
-        tvTime.setText(mTimeFormat.format(calendar.getTime()));
-        tvTime.setOnClickListener(mTimeClickListener);
-
+        if (mSP.contains(SH_STATE)) {
+            switch (mSP.getString("SH_STATE", "off")) {
+                case "on":
+                    mAlarm.mState = Alarm.OnOff.ON;
+                    break;
+                case "off":
+                    mAlarm.mState = Alarm.OnOff.OFF;
+                    break;
+            }
+        }
 
         Intent intent = new Intent(MainActivity.this, AlarmReceiver.class);
         alarmIntent = PendingIntent.getBroadcast(MainActivity.this, 0, intent, 0);
     }
 
-    @Override
-    public void onDateSet(int year, int month, int day) {
-        calendar.set(Calendar.YEAR, year);
-        calendar.set(Calendar.MONTH, month);
-        calendar.set(Calendar.DAY_OF_MONTH, day);
+    private void initWidgets() {
+        // checkbox
+        cbOnOff = findViewById(R.id.cb_onOff);
+        cbOnOff.setOnCheckedChangeListener(mOnOffListener);
 
-        tvDate.setText(mDateFormat.format(calendar.getTime()));
+        tvTime = findViewById(R.id.tv_time);
+        tvTime.setText(mTimeFormat.format(calendar.getTime()));
+        tvTime.setOnClickListener(mTimeClickListener);
     }
 
+
     @Override
-    public void onTimeSet(int hours, int minutes) {
-        tvTime.setText(hours + ":" + minutes);
+    public void onTimeSet(TimePicker tp, int hours, int minutes) {
+        tvTime.setText(String.format("%02d:%02d", hours, minutes));
         calendar.set(Calendar.HOUR_OF_DAY, hours);
         calendar.set(Calendar.MINUTE, minutes);
         calendar.set(Calendar.SECOND, 0);
@@ -108,7 +123,7 @@ public class MainActivity
                             AlarmManager.RTC_WAKEUP,
                             calendar.getTimeInMillis(),
                             alarmIntent);
-                }else {
+                } else {
                     alarmMgr.setRepeating(
                             AlarmManager.RTC_WAKEUP,
                             calendar.getTimeInMillis(),
@@ -121,25 +136,6 @@ public class MainActivity
                 }
             }
 
-        }
-    }
-
-    class OnDateClickListener implements View.OnClickListener {
-        @Override
-        public void onClick(View view) {
-            // TODO: send string and formatter, not Date
-            FragmentManager fm = getFragmentManager();
-            Date date = null;
-            try {
-                date = mDateFormat.parse(tvDate.getText().toString());
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
-            if (date == null) {
-                date = new Date();
-            }
-            DatePickerFragment dialog = DatePickerFragment.getInstance(date);
-            dialog.show(fm, DATE_PICKER_DIALOG);
         }
     }
 
