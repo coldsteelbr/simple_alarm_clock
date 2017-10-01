@@ -10,6 +10,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TimePicker;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
 import ru.romanbrazhnikov.simplealarmclock.R;
@@ -19,27 +22,35 @@ import ru.romanbrazhnikov.simplealarmclock.R;
  */
 
 public class TimePickerFragment extends DialogFragment {
-
+    // todo: inject format
+    private DateFormat mTimeFormat = new SimpleDateFormat("HH:mm");
     private TimePicker mTimePicker;
-    private Calendar mInitTimeCalendar;
+    private String mFormattedTime;
 
-    public static TimePickerFragment getInstance(Calendar timeCalendar) {
+    public static TimePickerFragment getInstance(String formattedTime) {
         TimePickerFragment fragment = new TimePickerFragment();
-        fragment.mInitTimeCalendar = timeCalendar;
+        fragment.mFormattedTime = formattedTime;
         return fragment;
     }
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
 
-        int hours = mInitTimeCalendar.get(Calendar.HOUR_OF_DAY);
-        int minutes = mInitTimeCalendar.get(Calendar.MINUTE);
+        Calendar calendar = Calendar.getInstance();
+        try {
+            calendar.setTime(mTimeFormat.parse(mFormattedTime));
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        int hours = calendar.get(Calendar.HOUR_OF_DAY);
+        int minutes = calendar.get(Calendar.MINUTE);
 
 
         View view = LayoutInflater.from(getActivity())
                 .inflate(R.layout.dialog_time, null);
 
         mTimePicker = view.findViewById(R.id.dialog_time_time_picker);
+        mTimePicker.setIs24HourView(android.text.format.DateFormat.is24HourFormat(getActivity()));
         mTimePicker.setCurrentHour(hours);
         mTimePicker.setCurrentMinute(minutes);
 
