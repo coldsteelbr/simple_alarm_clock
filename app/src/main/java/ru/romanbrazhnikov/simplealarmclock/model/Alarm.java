@@ -46,6 +46,7 @@ public class Alarm {
     }
 
     public void setTime(int hour, int minute) {
+        mCalendar = Calendar.getInstance(); // to reset the calendar
         mCalendar.set(Calendar.HOUR_OF_DAY, hour);
         mCalendar.set(Calendar.MINUTE, minute);
         mCalendar.set(Calendar.SECOND, 0);
@@ -73,7 +74,14 @@ public class Alarm {
         off();
 
         // check if TIME less or more than the current time
-        // add 1 day to the calendar then
+        Calendar currentTimeCalendar = Calendar.getInstance();
+
+        // if current time is later (or same), then one day must be added to the alarm
+        if (currentTimeCalendar.get(Calendar.HOUR_OF_DAY) * 60 + currentTimeCalendar.get(Calendar.MINUTE)
+                >= mCalendar.get(Calendar.HOUR_OF_DAY) * 60 + mCalendar.get(Calendar.MINUTE)) {
+            mCalendar.add(Calendar.DAY_OF_YEAR, 1);
+        }
+
 
         // then resetting
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
