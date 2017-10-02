@@ -5,6 +5,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Vibrator;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.view.Window;
@@ -15,6 +16,7 @@ import ru.romanbrazhnikov.simplealarmclock.R;
 
 public class AlarmActivity extends AppCompatActivity {
 
+    private Vibrator mVibrator;
     private Intent mAlarmIntent;
     private Button mStop;
 
@@ -22,6 +24,8 @@ public class AlarmActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_alarm);
+
+        mVibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
 
         Window window = this.getWindow();
         window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
@@ -39,5 +43,12 @@ public class AlarmActivity extends AppCompatActivity {
             }
         });
         mAlarmIntent = getIntent().getParcelableExtra("INTENT");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        mVibrator.vibrate(1000);
     }
 }
