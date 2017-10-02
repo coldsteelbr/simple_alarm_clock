@@ -2,6 +2,7 @@ package ru.romanbrazhnikov.simplealarmclock.view;
 
 import android.app.FragmentManager;
 import android.app.TimePickerDialog;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -21,12 +22,16 @@ public class MainActivity
         extends AppCompatActivity
         implements TimePickerDialog.OnTimeSetListener {
     private static final String TIME_PICKER_DIALOG = "TIME_PICKER_DIALOG";
+    public static final String SHARED_ALARM_FILE = "ru.romanbrazhnikov.simplealarmclock.SHARED_ALARM_FILE";
+    private static final String SHARED_TIME = "SHARED_TIME";
+    private static final String SHARED_STATE = "SHARED_STATE";
 
 
     private DateFormat mDateFormat = new SimpleDateFormat("dd.MM.yyyy");
     private DateFormat mTimeFormat = new SimpleDateFormat("HH:mm");
 
     private Alarm mAlarm;
+    private SharedPreferences mSharedPreferences;
 
     //
     // Listeners
@@ -45,10 +50,22 @@ public class MainActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        mSharedPreferences = getSharedPreferences(SHARED_ALARM_FILE, MODE_PRIVATE);
         mAlarm = new Alarm(this);
 
         initWidgets();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        restoreAlarmState();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        saveAlarmState();
     }
 
     private void initWidgets() {
@@ -69,6 +86,30 @@ public class MainActivity
         tvTime.setOnClickListener(mTimeClickListener);
     }
 
+    private void restoreAlarmState() {
+        // time
+        String time = mSharedPreferences.getString(SHARED_TIME, "00:00");
+        tvTime.setText(time);
+        // state
+        String stateString = mSharedPreferences.getString(SHARED_STATE, "off");
+        cbOnOff.setOnCheckedChangeListener(null);
+        switch (stateString) {
+            case "on":
+                cbOnOff.setChecked(true);
+                break;
+            case "off":
+                cbOnOff.setChecked(false);
+                break;
+        }
+        cbOnOff.setOnCheckedChangeListener(mOnOffListener);
+    }
+
+    private void saveAlarmState() {
+        mSharedPreferences.edit()
+                .putString(SHARED_TIME, tvTime.getText().toString())
+                .putString(SHARED_STATE, mAlarm.getState().asString())
+                .apply();
+    }
 
     @Override
     public void onTimeSet(TimePicker tp, int hours, int minutes) {
@@ -77,6 +118,9 @@ public class MainActivity
     }
 
 
+    /**
+     * Alarm On/Off listener
+     */
     class OnAlarmCheckedListener implements CheckBox.OnCheckedChangeListener {
 
         @Override
@@ -90,7 +134,6 @@ public class MainActivity
 
         }
     }
-
 
     /**
      * Shows TimerPickerDialog

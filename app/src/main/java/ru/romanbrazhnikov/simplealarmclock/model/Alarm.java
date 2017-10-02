@@ -4,6 +4,7 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.util.Pair;
 
@@ -21,21 +22,30 @@ import ru.romanbrazhnikov.simplealarmclock.AlarmReceiver;
 public class Alarm {
     // State
     public enum OnOff {
-        ON,
-        OFF
+
+        ON("on"),
+        OFF("off");
+        private String mAsString;
+
+        OnOff(String asString) {
+            mAsString = asString;
+        }
+
+        public String asString() {
+            return mAsString;
+        }
     }
 
-    private final Context mContext;
+    //private final Context mContext;
     private DateFormat mTimeFormat = new SimpleDateFormat("HH:mm");
     private OnOff mState = OnOff.OFF;
     private Calendar mCalendar = Calendar.getInstance();
     private AlarmManager alarmMgr;
     private PendingIntent alarmIntent;
-
+    private SharedPreferences mSharedPreferences;
 
     public Alarm(Context context) {
-        mContext = context;
-
+        // Init AlarmManager and Pending alarm intent
         alarmMgr = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         Intent intent = new Intent(context, AlarmReceiver.class);
         alarmIntent = PendingIntent.getBroadcast(context, 0, intent, 0);
@@ -43,6 +53,8 @@ public class Alarm {
 
     public void setTime(String time) throws ParseException {
         mCalendar.setTime(mTimeFormat.parse(time));
+        mCalendar.set(Calendar.SECOND, 0);
+        mCalendar.set(Calendar.MILLISECOND, 0);
     }
 
     public void setTime(int hour, int minute) {
